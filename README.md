@@ -7,6 +7,7 @@ Dependencies
 -------------------
 * Phalcon 1.3.1 +
 * \Softdream all Softdream library classes
+* Multi-Module Phalcon app
  
 
 Installation
