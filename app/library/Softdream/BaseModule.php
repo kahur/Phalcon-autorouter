@@ -1,5 +1,5 @@
 <?php
-
+namespace Softdream;
 /**
  * Description of BaseModule
  *

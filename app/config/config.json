@@ -6,7 +6,7 @@
         "baseUri"                : "/",
         "basePath"                : "../public",
         "libraryDir"                : "../app/library/",
-        "pluginsDir"                : "../app/library/Plugin/",
+        "pluginsDir"                : "../app/library/Softdream/Plugin/",
         "cachePath"                : "../app/cache/",
         "templateEngine"        : "volt",
         "templateExtension"        : ".phtml",

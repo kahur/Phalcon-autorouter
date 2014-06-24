@@ -3,7 +3,7 @@
 namespace Frontend;
 
 
-class Module extends \BaseModule {
+class Module extends \Softdream\BaseModule {
     public function __construct() {
 	parent::__construct(__NAMESPACE__);
     }
