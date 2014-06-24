@@ -71,7 +71,7 @@ class AutoRoute {
      */
     protected $urlActionPosition = 2;
     /**
-     * @var \MIA\Http\Request
+     * @var Softdream\Http\Request
      */
     protected $request;
     
@@ -124,7 +124,7 @@ class AutoRoute {
 	$this->router = $this->di->get('router');
 	$this->modules = $this->application->getModules();
 	
-	$this->request = new \MIA\Http\Request(new \MIA\Http\Url\Map('/:module/:controller/:action'));
+	$this->request = new Softdream\Http\Request(new Softdream\Http\Url\Map('/:module/:controller/:action'));
     }
     
     /**
@@ -174,7 +174,7 @@ class AutoRoute {
 		$this->request->removeParam('module');
 	    }
 	    else {
-		$updateUrlMap = new \MIA\Http\Url\Map('/:controller/:action');
+		$updateUrlMap = new Softdream\Http\Url\Map('/:controller/:action');
 		$this->request->setMap($updateUrlMap);
 		$this->moduleInfo = $this->modules[$this->module];
 	    }
@@ -213,7 +213,7 @@ class AutoRoute {
 	//if controller is not set in url or not exist
 	if(!$this->isControllerExist($controllerClass))
 	{
-	    $urlMap = new \MIA\Http\Url\Map('/:action');
+	    $urlMap = new Softdream\Http\Url\Map('/:action');
 	    $this->request->setMap($urlMap);
 	    $controller = isset($this->moduleInfo['defaultController']) ? $this->moduleInfo['defaultController'] : null;
 //	    echo $controller;
@@ -242,7 +242,7 @@ class AutoRoute {
 	$actionName = $this->urlFormatToCamel($action).'Action';
 	
 	if(!$this->isActionExist($controllerClass, $actionName)){
-	    $urlMap = new \MIA\Http\Url\Map('/');
+	    $urlMap = new Softdream\Http\Url\Map('/');
 	    $this->request->setMap($urlMap);
 	    $action = isset($this->moduleInfo['defaultAction']) ? $this->moduleInfo['defaultAction'] : null;
 	    $actionName = $this->urlFormatToCamel($action).'Action';
