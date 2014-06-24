@@ -11,7 +11,10 @@ Dependencies
 
 Installation
 -------------------
-* See config/config.json 
+* See config/config.json optional settings: defaultController, defaultAction
+* See bootstrap.php at line 44 to check Request class registration
+* See bootstrap.php from line 98 to 111 to check how to register plugin to work
+* For change structure is important to have on mind change namespaces too.
 
 
 How it works ?
