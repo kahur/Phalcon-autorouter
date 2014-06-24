@@ -1,0 +1,31 @@
+{
+    "application" : {
+        "controllerDirName"        : "controller",
+        "modelDirName"                : "model",
+        "viewDirName"                : "views",
+        "baseUri"                : "/",
+        "basePath"                : "../public",
+        "libraryDir"                : "../app/library/",
+        "pluginsDir"                : "../app/library/Plugin/",
+        "cachePath"                : "../app/cache/",
+        "templateEngine"        : "volt",
+        "templateExtension"        : ".phtml",
+        "templateEngineCachePath" : "../cache/volt/",
+        "themesPath"                : "/css/"
+    },
+    "modules": [
+        {
+            "moduleName"        : "Admin",
+	    "baseUrl"		: "/admin",
+	    "defaultController"	: "index",
+	    "defaultAction"	: "index"
+        },
+        {
+            "moduleName"        : "Frontend",
+	    "baseUrl"		: "/",
+	    "defaultModule"	: "1",
+	    "defaultController" : "index",
+	    "defaultAction"	: "index"
+        }
+    ]
+}
