@@ -123,8 +123,13 @@ class AutoRoute {
 	$this->di = $this->application->getDI();
 	$this->router = $this->di->get('router');
 	$this->modules = $this->application->getModules();
-	
-	$this->request = new Softdream\Http\Request(new Softdream\Http\Url\Map('/:module/:controller/:action'));
+	$config = $this->di->get("config");
+	$mapString = (isset($config->application->baseUri) && $config->application->baseUri !== '/') ? '/:baseurl' : '';
+	$mapString .= '/:module/:controller/:action';
+	$this->request = new \Softdream\Http\Request(new \Softdream\Http\Url\Map($mapString));
+	if($this->request->getParam('baseurl')){
+	    $this->request->removeParam('baseurl');
+	}
     }
     
     /**
