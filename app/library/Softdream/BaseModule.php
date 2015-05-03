@@ -25,7 +25,7 @@ abstract class BaseModule implements \Phalcon\Mvc\ModuleDefinitionInterface {
      *
      * @param \Phalcon\DiInterface $dependencyInjector
      */
-    public function registerAutoloaders()
+    public function registerAutoloaders(\Phalcon\DiInterface $di = null)
     {
         $loader = new \Phalcon\Loader();
         $loader->registerNamespaces(
@@ -42,7 +42,7 @@ abstract class BaseModule implements \Phalcon\Mvc\ModuleDefinitionInterface {
      *
      * @param \Phalcon\DiInterface $di
      */
-    public function registerServices($di)
+    public function registerServices(\Phalcon\DiInterface $di = null)
     {
         $di->set('view', function(){
             $view = new \Phalcon\Mvc\View();
