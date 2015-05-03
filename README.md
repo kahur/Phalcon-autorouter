@@ -1,6 +1,9 @@
 Phalcon-autorouter
 ==================
 
+Version 1.1
+-------------------
+
 Example phalcon application with AutoRoute plugin
 
 Dependencies

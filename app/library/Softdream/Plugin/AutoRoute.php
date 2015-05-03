@@ -9,14 +9,18 @@ use Phalcon\Events\Event,
  * AutoRoute class, depends ErrorController and 404Action in any module to follow non exist path's to error pages.
  *
  * @author Webvizitky, Softdream <info@webvizitky.cz>,<info@softdream.net>
- * @copyright (c) 2013, Softdream, Webvizitky
+ * @copyright (c) 2013, Softdream, Webvizitky, Flipixo Ltd
  * @package name
  * @category name
+ * @todo integrate support to work with Module component to improve APP performance
  * 
  */
 class AutoRoute {
     
-
+    /**
+     * @var \Phalcon\Events\EventManager
+     */
+    protected $eventManger;
     /**
      * @var \Phalcon\Mvc\Application
      */
@@ -71,11 +75,19 @@ class AutoRoute {
      */
     protected $urlActionPosition = 2;
     /**
-     * @var Softdream\Http\Request
+     * @var \Core\Http\Request
      */
     protected $request;
     
-    public function __construct() {
+    /**
+     * @var decimal Phalconphp version
+     */
+    
+    protected $version;
+    
+    public function __construct(\Phalcon\Events\Manager $manager) {
+	$this->eventManger = $manager;
+        $this->version = \Phalcon\Version::get();
 	
     }
     
@@ -84,6 +96,7 @@ class AutoRoute {
      * the method will be called before load and start 
      */
     public function boot(Event $event,\Phalcon\Mvc\Application $application){
+        
 	$this->setPluginData($application);
 	
 	$this->registerNamespaces();
@@ -97,8 +110,10 @@ class AutoRoute {
 	//parse url without module/c
 	$this->request->parseUri();
 	
+        
 	$this->di->set('request',$this->request);
-	$this->router->setDefaultModule($this->module);
+        
+	$this->router->setDefaultModule(ucfirst($this->module));
 	$this->router->setDefaultAction($this->action);
 	$this->router->setDefaultController($this->controller);
     }
@@ -107,12 +122,11 @@ class AutoRoute {
 	$this->di->set('dispatcher', function(){
             $dispatcher = new \Phalcon\Mvc\Dispatcher();
 	    $dispatcher->setDefaultNamespace(ucfirst($this->module).'\Controller');
+		$dispatcher->setEventsManager($this->eventManger);
             return $dispatcher;
         });
 	
-	
-    }
-
+    } 
     
     /**
      * Set main Class variables to correct plugin work
@@ -122,14 +136,9 @@ class AutoRoute {
 	$this->application = $application;
 	$this->di = $this->application->getDI();
 	$this->router = $this->di->get('router');
-	$this->modules = $this->application->getModules();
-	$config = $this->di->get("config");
-	$mapString = (isset($config->application->baseUri) && $config->application->baseUri !== '/') ? '/:baseurl' : '';
-	$mapString .= '/:module/:controller/:action';
-	$this->request = new \Softdream\Http\Request(new \Softdream\Http\Url\Map($mapString));
-	if($this->request->getParam('baseurl')){
-	    $this->request->removeParam('baseurl');
-	}
+	$this->modules = $this->application->getModules();        
+	
+	$this->request = new \Core\Http\Request(new \Core\Http\Url\Map('/:module/:controller/:action'));
     }
     
     /**
@@ -139,8 +148,8 @@ class AutoRoute {
 	$loader = new \Phalcon\Loader();
 	$namespaces = array();
 	foreach($this->modules as $moduleName => $module){
-	    $namespaces[ucfirst($moduleName).'\Controller'] = '../app/'.  ucfirst($moduleName).'Module/controller';
-	    $namespaces[ucfirst($moduleName).'\Model'] = '../app/'.ucfirst($moduleName).'Module/model';
+	    $namespaces[ucfirst($moduleName).'\Controller'] = '../app/modules/'.  ucfirst($moduleName).'Module/controller';
+	    $namespaces[ucfirst($moduleName).'\Model'] = '../app/modules/'.ucfirst($moduleName).'Module/model';
 	}
 	
         $loader->registerNamespaces($namespaces);
@@ -171,17 +180,26 @@ class AutoRoute {
     protected function setModule(){
 	//check if module exist if yes prepare default or find module by first parameter in url
 	if(!empty($this->modules)){
-	    $this->module = $this->router->getDefaultModule();
-	    $module = $this->request->getParam('module');
-	    if($module && isset($this->modules[$module])){
-		$this->moduleInfo = $this->modules[$this->request->getParam('module')];
-		$this->module = $module;
+            
+            if($this->version < 2){
+                $this->module = $this->router->getDefaultModule();
+            }
+            else {
+                $defaults = $this->router->getDefaults();
+                $this->module = $defaults['module'];
+            }
+	    $module = $this->urlFormatToCamel($this->request->getParam('module'),true);
+            
+	    if($module && isset($this->modules[ucfirst($module)])){
+                
+		$this->moduleInfo = $this->modules[ucfirst($module)];
+		$this->module = ucfirst($module);
 		$this->request->removeParam('module');
 	    }
 	    else {
-		$updateUrlMap = new Softdream\Http\Url\Map('/:controller/:action');
+		$updateUrlMap = new \Core\Http\Url\Map('/:controller/:action');
 		$this->request->setMap($updateUrlMap);
-		$this->moduleInfo = $this->modules[$this->module];
+		$this->moduleInfo = $this->modules[ucfirst($this->module)];
 	    }
 	}
     }
@@ -191,7 +209,9 @@ class AutoRoute {
      * @return boolean true when class exists false when not
      */
     protected function isControllerExist($controllerClassName){	
-	return class_exists($controllerClassName,true);
+//	class_exi
+        
+	return class_exists($controllerClassName);
     }
     
     /**
@@ -214,15 +234,16 @@ class AutoRoute {
 	$controller = $this->request->getParam('controller');
 	//get controller from url	
 	$controllerClass = '\\'.ucfirst($this->module).'\Controller\\'.$this->urlFormatToCamel($controller, true).'Controller';
-	
+        
 	//if controller is not set in url or not exist
 	if(!$this->isControllerExist($controllerClass))
 	{
-	    $urlMap = new Softdream\Http\Url\Map('/:action');
+	    $urlMap = new \Core\Http\Url\Map('/:action');
 	    $this->request->setMap($urlMap);
 	    $controller = isset($this->moduleInfo['defaultController']) ? $this->moduleInfo['defaultController'] : null;
 //	    echo $controller;
 	    $controllerClass = '\\'.ucfirst($this->module).'\Controller\\'.$this->urlFormatToCamel($controller, true).'Controller';
+	    
 	    if(!$this->isControllerExist($controllerClass)){
 		$controller = 'error';
 	    }    
@@ -230,7 +251,9 @@ class AutoRoute {
 	else {
 	    $this->request->removeParam('controller');
 	}
-		
+        
+        
+	
 	$this->controller = strtolower($controller);
     }
     
@@ -243,14 +266,14 @@ class AutoRoute {
      */
     protected function setAction(){
 	$controllerClass = '\\'.ucfirst(strtolower($this->module)).'\Controller\\'.$this->urlFormatToCamel($this->controller, true).'Controller';
-	$action = $this->request->getParam('action');
+	$action = $this->urlFormatToCamel($this->request->getParam('action'));
 	$actionName = $this->urlFormatToCamel($action).'Action';
-	
 	if(!$this->isActionExist($controllerClass, $actionName)){
-	    $urlMap = new Softdream\Http\Url\Map('/');
+	    $urlMap = new \Core\Http\Url\Map('/');
 	    $this->request->setMap($urlMap);
 	    $action = isset($this->moduleInfo['defaultAction']) ? $this->moduleInfo['defaultAction'] : null;
 	    $actionName = $this->urlFormatToCamel($action).'Action';
+	    
 	    if(!$action || !$this->isActionExist($controllerClass, $actionName) || $this->controller == 'error'){
 		$action = 'index';
 		if($this->controller === 'error' || 
