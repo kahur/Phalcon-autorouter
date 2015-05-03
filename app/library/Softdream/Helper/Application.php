@@ -84,16 +84,11 @@ class Application {
     
     protected function loadModuleConfiguration($module){
         $pathToConfig = '../app/modules/'.ucfirst($module).'Module/config/config.json';
-        $cache = \Core\Cache::factory('Data', 'Memcache');
         $mainConfig = $this->di->getConfig();
-//        if(!$cache->exists('config'))
-//        {
         if(file_exists($pathToConfig)){
              $config = new \Phalcon\Config\Adapter\Json($pathToConfig);
              $mainConfig->merge($config);
-        }
-//        }
-        
+        }        
     }
 
 }
