@@ -47,20 +47,23 @@ class Application {
 		
                 $lowerCaseModuleName = strtolower($module->moduleName);
 		
-                $applicationConfig[$lowerCaseModuleName] = array(
-                    'className'	    => '\\'.((isset($module->moduleClass)) ? $module->moduleClass : ucfirst(strtolower($module->moduleName)).'\Module'),
-                    'path'		    => (isset($module->moduleClassPath)) ? $module->moduleClassPath : '../app/'.ucfirst(strtolower($module->moduleName)).'Module/Module.php',
+                $applicationConfig[ucfirst($module->moduleName)] = array(
+                    'className'	    => '\\'.((isset($module->moduleClass)) ? $module->moduleClass : ucfirst($module->moduleName).'\Module'),
+                    'path'		    => (isset($module->moduleClassPath)) ? $module->moduleClassPath : '../app/modules/'.ucfirst($module->moduleName).'Module/Module.php',
 		    'baseUrl'	    => (isset($module->baseUrl)) ? $module->baseUrl : null,
 		    'defaultController' => (isset($module->defaultController)) ? $module->defaultController : null,
 		    'defaultAction' => (isset($module->defaultAction)) ? $module->defaultAction : null
                 );
+                
+                $this->loadModuleConfiguration($module->moduleName);
 		
 		if(isset($module->defaultModule) && $module->defaultModule == 1 && !$defaultModule){
 		    $defaultModule = $lowerCaseModuleName;
 		}
 		
             }
-	    
+            
+            
 	    $router = new \Phalcon\Mvc\Router(false);
 	    //set default module
 	    if(!$defaultModule){
@@ -69,12 +72,28 @@ class Application {
 	    
 	    $router->setDefaultModule($defaultModule);
 	    //register route to di
-            $this->di->set('router', $router);
+            $this->di->set('router', function() use($router){
+                return $router;
+            });
             $this->application->registerModules($applicationConfig);
         }
         catch(Exception $e){
             throw new Exception($e->getMessage(),$e->getCode());
         }
+    }
+    
+    protected function loadModuleConfiguration($module){
+        $pathToConfig = '../app/modules/'.ucfirst($module).'Module/config/config.json';
+        $cache = \Core\Cache::factory('Data', 'Memcache');
+        $mainConfig = $this->di->getConfig();
+//        if(!$cache->exists('config'))
+//        {
+        if(file_exists($pathToConfig)){
+             $config = new \Phalcon\Config\Adapter\Json($pathToConfig);
+             $mainConfig->merge($config);
+        }
+//        }
+        
     }
 
 }
