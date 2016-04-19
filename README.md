@@ -1,47 +1,55 @@
 Phalcon-autorouter
 ==================
 
-Version 1.1
+Version 2.0
 -------------------
 
-Example phalcon application with AutoRoute plugin
+Example full application with various libraries included in this example
+
+**Change log**
+* Structure have been changed and updated to more clear and better working
+* Added support to define full custom folder structure and set it in configuration file
+* Add various usable libraries and features as plugin Installer, Observer, Directory, File adapter, Image, Mail etc.
+* Observer support to define custom observer events on both sides, then execute events see example in plugin structure. Module observer listeners can be registered in module config file and events in installation script of plugin. See example config and plugin.
+* Added support for rest routing
+* Added support to define custom rest routing actions
+* Added support for Phalcon 1.0 in AutoRoute plugin and AccessControll
+* Fix matching url to route
+* Improve loading and performance of access controll
+* Version 1.0 it's not more supported, for older projects please use branch v1 to access old AutoRouting plugin
+* Sofdream namespace and folder have been removed in new version is Core
 
 Dependencies
 -------------------
 * Phalcon 1.3.1 +
-* \Softdream all Softdream library classes
+* \Core, \Helper, \Plugin and all libraries included in library
 * Multi-Module Phalcon app
  
 
 Installation
 -------------------
-* See config/config.json optional settings: defaultController, defaultAction
-* See bootstrap.php at line 44 to check Request class registration
-* See bootstrap.php from line 98 to 111 to check how to register plugin to work
-* For change structure is important to have on mind change namespaces too.
+* Copy contents of projects
+* Edit app/config/config.json and update db and path settings if neccessary
 
 
 How it works ?
 -------------------
 
-AutoRoute plugin gets params from URL and match first three params with module,controller,action eg.:
-* First AutRoute plugin try compare first url part with modules and if module exist part will be removed from request and set default module into route.
-* When the first part of url is not match with module the plugin will try set default module which is set in configuration
-* When module is set from configuration the plugin will try match first parameter with controller of the module
-* When controller is founded the param will be removed from request and sets as default controller into router
-* When controller is not founded from url the plugin will again set from default configuration, if the default value is not set in configuration plugin will forward request to ErrorController with error404Action of the same module.
-* Same proces is with first three params. if first doesn't match with module, plugin will try match with controller when doesn't match with controller plugin will try match with action when no one is matched, the plugin will set defaults if the defaults is set.
+AutoRoutin plugin route application based on URL in order /module/controller/action/. When module, controller or action
+have not been found AutoRoute plugin automaticaly shift route for specific part and set it for next part eg.:
+/module/controller/action/ where module is not been found then automatic default module have been used and module part is set as an "controller".
+Same process happening until all parts are defined or found. Error action is being used when no default actions are set in configuration.
 
 Example
 -------------------
-**Url: /admin/param/value/**
+**Url: /manager/param/value/**
 
-When we have set defaultController and defaultAction in configuration the url will be matched right as: module: Admin, controller: default controller from configuration (index), action: default action from controller (index) but if controller or action doesn't exist it will be forwarded to ErrorController, other parts of url will be stored in Request class.
+Url will be routed to: manger module with indexAction rest of parameters behind /manager/ will be parsed and accessible in order /key/value/ in this case $this->request->getParam('param') will return value.
 
-**Url: /admin/mycontroller/param/value/**
+**Url: /admin/my-own/param/value/**
 
-The url will be matched too, but will be forwarded to mycontroller
-etc.
+Url will be routed to: manger module to myOwnController and indexAction rest of parameters behind /manager/my-own/ will be parsed and accessible in order /key/value/ in this case $this->request->getParam('param') will return value.
+
 
 Accessing params
 ---------------------
@@ -64,7 +72,13 @@ $myParam1 = $this->request->getParam("mycustomname");// returns mycustomvalue
 $myParam2 = $this->request->getParam("mynextname");//returns mynextvalue
 ```
 
-Parts admin and mycontroller has been removed in AutoRouter due to parts are match with admin and controller. If the parts doesn't have been matched the return values will be : for mycustomname will be admin and for mynextvalue will be mynextvalue;
+To access part's what have been shifted (/admin/mycontroller/) durring auto routing process we can use
+
+```PHP
+$this->request->getParam("module"); // to access module name ( admin )
+$this->request->getParam("controller"); //to access url controller value
+$this->request->getParam("action"); //to access url action name 
+```
 
 ENJOY!
 

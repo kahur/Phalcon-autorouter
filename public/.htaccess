@@ -1,0 +1,9 @@
+AddDefaultCharset UTF-8
+RewriteEngine On
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^channel(.*)$ channel.php [L,NC,QSA] 
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f 
+    RewriteRule ^(.*)$ index.php?_url=/$1 [QSA,L]    
+</IfModule>

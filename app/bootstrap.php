@@ -5,14 +5,12 @@ use Phalcon\Mvc\Url as UrlResolver;
 use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
-use Phalcon\Session\Adapter\Files as SessionAdapter;
 /**
  * Description of bootstrap
  *
  * @author Webvizitky, Softdream <info@webvizitky.cz>,<info@softdream.net>
- * @copyright (c) 2013, Webvizitky
+ * @copyright (c) 2014 - 2015, Miranthis a.s.
  */
-
 
 try {
 
@@ -30,7 +28,6 @@ $loader->registerDirs(
     )
 )->register();
 
-//register services
 
 
 
@@ -39,13 +36,22 @@ $loader->registerDirs(
  */
 $di = new FactoryDefault();
 
-$di->set('config', $config);
+$di->set('config', $config);    
+$di->set('assets',new \Assets(),true);
 
 $di->set('request',function(){
-    return new \Softdream\Http\Request();
+    return new Core\Http\Request();
+});
+
+$di->set('formsManager',function(){
+    return new Core\Form\Manager();
+},true);
+
+$di->set('response',function(){
+    return new Core\Http\Response();
 });
 /**
- * The URL component is used to generate all kind of urls in the application
+  The URL component is used to generate all kind of urls in the application
  */
 $di->set('url', function () use ($config) {
     $url = new UrlResolver();
@@ -54,7 +60,8 @@ $di->set('url', function () use ($config) {
     return $url;
 }, true);
 
-//register template engine
+$di->set('cache',\Core\Cache::factory('data', 'memcache', $config->memcache->toArray()), true);
+
 $di->set('templateEngine', function($view, $di) use($config) {
     $engine = new VoltEngine($view, $di);
     $engine->setOptions(
@@ -62,20 +69,38 @@ $di->set('templateEngine', function($view, $di) use($config) {
             'compiledPath' => $config->application->templateEngineCachePath
         )
     );
+
+    $compiler = $engine->getCompiler();
+    //register getImage snippet to template
+    $compiler->addFunction('getImage',function($resolvedArgs,$exprArgs) use($compiler){
+        $path = isset($exprArgs[0]['expr']) ? $compiler->expression($exprArgs[0]['expr']) : null;
+        $base64 = isset($exprArgs[1]['expr']) ? $compiler->expression($exprArgs[1]['expr']) : false;
+        $w = isset($exprArgs[2]['expr']) ? $compiler->expression($exprArgs[2]['expr']) : null;
+        $h = isset($exprArgs[3]['expr']) ? $compiler->expression($exprArgs[3]['expr']) : null;
+        return "\Core\File\Adapter\Image::getImage(".$path.",".$base64.",".$w.",".$h.")";
+    });
+    
     return $engine;
 }, true);
+
 
 /**
  * Database connection is created based in the parameters defined in the configuration file
  */
 $di->set('db', function () use ($config) {
-    return new DbAdapter(array(
+    $config = array(
         'host' => $config->database->host,
         'username' => $config->database->username,
         'password' => $config->database->password,
-        'dbname' => $config->database->dbname
-    ));
-});
+        'dbname' => $config->database->dbname,
+	'charset' => $config->database->charset
+    );
+    return new DbAdapter($config);
+},true);
+
+$di->set('security', function(){
+    return new \Phalcon\Security();
+}, true);
 
 /**
  * If the configuration specify the use of metadata adapter use it or use memory otherwise
@@ -87,30 +112,83 @@ $di->set('modelsMetadata', function () {
 /**
  * Start the session the first time some component request the session service
  */
-$di->set('session', function () {
-    $session = new SessionAdapter();
+$di->set('session', function () use ($config) {
+    $session = new \Phalcon\Session\Adapter\Memcache((array) $config->memcache );
     $session->start();
 
     return $session;
-});
+}, true);
+
+$di->set('cookies', function () {
+    $cookies = new Phalcon\Http\Response\Cookies();
+    $cookies->useEncryption(false);
+    return $cookies;
+}, true);
 
 
-//our awesome feature auto-routing start here :)
+$di->set('flash', function(){
+    $flash = new \Core\Flash\Session(array(
+        'error'	    => 'alert alert-danger alert-dismissible alert-fixed',
+        'success'   => 'alert alert-success alert-dismissible alert-fixed',
+        'notice'    => 'alert alert-info alert-dismissible alert-fixed',
+	'warning'   => 'alert alert-warning alert-dismissible alert-fixed'
+    ));
+    
+    return $flash;
+},true);
+
+$di->set('cacheManager', function()use($config){
+    return new \Core\Cache\Manager($config);
+},true);
+
+$di->set("elements",function(){
+    $elements = new \Elements();
+    
+    return $elements;
+},true);
+
+
+$di->set('lang', function(){
+    $lang = new Lang(array(
+        'cache'         => null,
+        'defaultLang'   => 'cz'
+    ));
+    
+    return $lang;
+},true);
+
+
 $application = new \Phalcon\Mvc\Application($di);
-//we use the helper to auto register modules from configuration
-$helper = new \Softdream\Helper\Application($application);
+$helper = new \Helper\Application($application);
 //register routers and modules
 $helper->registerModules();
-//create events manager
 $eventManager = new \Phalcon\Events\Manager();
-//Create instance of our awesome feature :)
-$autoRoutePlugin = new \Softdream\Plugin\AutoRoute();
-//attach AutoRoute plugin into application events
+
+//plugin loader
+$pluginLoader = new \Plugin\Loader($application, $di, $config);
+$pluginLoader->setPluginDirectory('../app/library/Plugin/');
+$eventManager->attach('application', $pluginLoader);
+
+//autoroute plugin
+$autoRoutePlugin = new \Plugin\AutoRoute($eventManager);
 $eventManager->attach('application', $autoRoutePlugin);
+$eventManager->attach("dispatch",$autoRoutePlugin);
+
+//access controll plugion
+$accesControlPlugin = new \Plugin\Authentication\AccessControl($application,true);
+$accesControlPlugin->disableModuleAcl('web');
+
+$eventManager->attach('dispatch', $accesControlPlugin);
+
+$di->set('menu', function()use($config){
+    $menu = new \Plugin\Authentication\Components\Menu($config->menu);
+    return $menu;
+});
 
 $application->setEventsManager($eventManager);
-//run the app!
+
 echo $application->handle()->getContent();
+
 } catch (\Exception $e) {
     throw $e;
 }

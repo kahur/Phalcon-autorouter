@@ -1,4 +1,9 @@
 {
+    "system" : {
+        "version" : "1.5",
+        "name"    : "FlipFlop",
+        "license" : "http://www.webowebu.cz/flip-flop/license/"
+    },
     "application" : {
         "controllerDirName"        : "controller",
         "modelDirName"                : "model",
@@ -6,26 +11,45 @@
         "baseUri"                : "/",
         "basePath"                : "../public",
         "libraryDir"                : "../app/library/",
-        "pluginsDir"                : "../app/library/Softdream/Plugin/",
+        "pluginsDir"                : "../app/library/Plugin/",
         "cachePath"                : "../app/cache/",
+        "modulesPath"              : "../app/modules/",
         "templateEngine"        : "volt",
         "templateExtension"        : ".phtml",
         "templateEngineCachePath" : "../cache/volt/",
-        "themesPath"                : "/css/"
+        "themesPath"                : "/css/",
+        "mediaPath"                 : "/media/",
+        "photosPath"                : "/media/images/",
+        "superGroups"               : [1,2],
+        "cache"                     : "memcache",
+        "autoObserver"              : 0
+    },
+    "database": {
+        "host": "localhost",
+        "username": "user",
+        "password": "password",
+        "dbname": "dbname",
+	"charset": "UTF8"
+    },
+    "memcache": {
+        "host" : "127.0.0.1",
+        "port" : 11211,
+        "lifetime" : 14400,
+        "persistent" : 1
     },
     "modules": [
         {
-            "moduleName"        : "Admin",
-	    "baseUrl"		: "/admin",
-	    "defaultController"	: "index",
-	    "defaultAction"	: "index"
+            "moduleName"        : "Manager",
+	    "baseUrl"       : "/manger",
+            "defaultController" : "index",
+	    "defaultAction" : "index"
         },
         {
-            "moduleName"        : "Frontend",
-	    "baseUrl"		: "/",
-	    "defaultModule"	: "1",
+            "moduleName"        : "Web",
+	    "baseUrl"       : "/",
 	    "defaultController" : "index",
-	    "defaultAction"	: "index"
+	    "defaultAction" : "index",
+            "defaultModule" : "1"
         }
     ]
 }

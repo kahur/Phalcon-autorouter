@@ -1,0 +1,9 @@
+{
+    "observers" : [
+        "manager.structure.beforeAddmodule",
+        "manager.structure.beforeAddcontent",
+        "manager.structure.add.post",
+        "manager.structure.beforeEdit",
+        "manager.structure.edit.post"
+    ]
+}
