@@ -67,7 +67,7 @@ In any reqeust it can be sat some map for url params.
 
 ```PHP
 //url: /admin/mycontroller/mycustomvalue/mynextvalue/
-$this->request->setMap(new \Softdream\Http\Url\Map("/:mycustomname/:mynextname");
+$this->request->setMap(new \Core\Http\Url\Map("/:mycustomname/:mynextname");
 $myParam1 = $this->request->getParam("mycustomname");// returns mycustomvalue
 $myParam2 = $this->request->getParam("mynextname");//returns mynextvalue
 ```
