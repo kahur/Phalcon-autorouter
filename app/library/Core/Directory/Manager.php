@@ -22,7 +22,7 @@ class Manager {
     public function isWritable(){
         $path = $this->reader->getPath();
         $path = (substr($path, 0,1) === '/') ? substr($path, 1) : $path;
-        return is_writable('/'.$path);
+        return is_writable($path);
     }
     
     public function isExist(){
